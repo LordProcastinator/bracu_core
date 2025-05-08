@@ -436,11 +436,35 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                _featureCard('CGPA Calculator', Colors.red),
+                _featureCard(
+                  'CGPA Calculator',
+                  Icons.calculate,
+                  Colors.red,
+                      () {
+                    print('CGPA Calculator tapped!');
+                    // Navigate or perform an action
+                  },
+                ),
                 SizedBox(width: 10),
-                _featureCard('AI Assistant', Colors.green),
+                _featureCard(
+                  'AI Assistant',
+                  Icons.smart_toy,
+                  Colors.green,
+                      () {
+                    print('AI Assistant tapped!');
+                    // Navigate or perform an action
+                  },
+                ),
                 SizedBox(width: 10),
-                _featureCard('Thesis group finder', Colors.blue),
+                _featureCard(
+                  'Thesis Group Finder',
+                  Icons.group,
+                  Colors.blue,
+                      () {
+                    print('Thesis Group Finder tapped!');
+                    // Navigate or perform an action
+                  },
+                ),
               ],
             ),
           ),
@@ -449,21 +473,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _featureCard(String title, Color color) {
-    return Container(
-      width: 150,
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.calculate, color: Colors.white, size: 30),
-          SizedBox(height: 5),
-          Text(title, style: TextStyle(color: Colors.white, fontSize: 16)),
-        ],
+  Widget _featureCard(String title, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 150,
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 30),
+            SizedBox(height: 5),
+            Text(title, style: TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
       ),
     );
   }
@@ -515,7 +542,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -524,26 +550,38 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: MediaQuery.of(context).size.width * 0.5,
                     margin: EdgeInsets.symmetric(vertical: 8),
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final sosData = Sos(
+                          userId: '12345', // Replace with the actual user ID
+                          latitude: double.tryParse(location.split(',')[0]) ?? 0.0,
+                          longitude: double.tryParse(location.split(',')[1]) ?? 0.0,
+                          message: 'Emergency! Please send help.',
+                          timestamp: DateTime.now().toIso8601String(),
+                          contacts: [
+                            Contact(name: 'John Doe', phone: '+1234567890'),
+                            Contact(name: 'Jane Smith', phone: '+0987654321'),
+                          ],
+                        );
+
+                        await sendSos(sosData);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Soon to be implemented'),
-                          ),
+                          SnackBar(content: Text('SOS sent successfully!')),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white, backgroundColor: Colors.teal, // Text color
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.teal,
                         padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12), // Rounded corners
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        elevation: 5, // Elevation
+                        elevation: 5,
                       ),
                       child: Text(
                         '⚠️ Send SOS',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                    )
+                    ),
                   ),
                 ],
               )
@@ -552,5 +590,75 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     );
+  }
+  Future<void> sendSos(Sos sosData) async {
+    final url = Uri.parse('${api_root}/api/sos');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ${Provider.of<ProfileProvider>(context, listen: false).authToken}',
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(sosData.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('SOS sent successfully: ${response.body}');
+      } else {
+        debugPrint('Failed to send SOS: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error sending SOS: $e');
+    }
+  }
+}
+
+
+/////////////////////////////////////////////////////////// sos class r notun file e kkorlam na ////////////////////////////////////////////////////
+class Sos {
+  final String userId;
+  final double latitude;
+  final double longitude;
+  final String message;
+  final String timestamp;
+  final List<Contact> contacts;
+
+  Sos({
+    required this.userId,
+    required this.latitude,
+    required this.longitude,
+    required this.message,
+    required this.timestamp,
+    required this.contacts,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': userId,
+      'location': {
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      'message': message,
+      'timestamp': timestamp,
+      'contacts': contacts.map((contact) => contact.toJson()).toList(),
+    };
+  }
+}
+
+class Contact {
+  final String name;
+  final String phone;
+
+  Contact({required this.name, required this.phone});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'phone': phone,
+    };
   }
 }
