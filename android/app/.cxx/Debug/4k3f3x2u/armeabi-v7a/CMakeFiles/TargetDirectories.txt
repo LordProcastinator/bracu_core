@@ -1,0 +1,2 @@
+D:/bracu_core/android/app/.cxx/Debug/4k3f3x2u/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/bracu_core/android/app/.cxx/Debug/4k3f3x2u/armeabi-v7a/CMakeFiles/rebuild_cache.dir
